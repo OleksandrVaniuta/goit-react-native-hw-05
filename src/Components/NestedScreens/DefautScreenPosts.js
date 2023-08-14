@@ -13,15 +13,34 @@ import {
   Platform,
 } from 'react-native';
 import { EvilIcons } from '@expo/vector-icons';
+import { collection, getDocs, getFirestore } from 'firebase/firestore';
+import app from '../../Firebase/config';
+// import db from '../Firebase/config';
 
-export default function DefaultScrenPosts({ route, navigation }) {
+const cloudDb = getFirestore(app);
+
+export default function DefaultScrenPosts({ navigation }) {
   const [posts, setPosts] = useState([]);
 
-  useEffect(() => {
-    if (route.params) {
-      setPosts((prevState) => [...prevState, route.params]);
+  const getAllPosts = async () => {
+    try {
+      const snapshot = await getDocs(collection(cloudDb, 'posts'));
+      // const data = setPosts(
+      //   snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }))
+      // );
+      return setPosts(
+        snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }))
+      );
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
-  }, [route.params]);
+  };
+
+  useEffect(() => {
+    getAllPosts();
+    // console.log(posts);
+  }, []);
 
   const toMap = (location) => {
     navigation.navigate('MapScreen', { location });
@@ -56,7 +75,7 @@ export default function DefaultScrenPosts({ route, navigation }) {
                 {item.locationName && (
                   <TouchableOpacity
                     style={[styles.iconContainer, { marginLeft: 'auto' }]}
-                    onPress={() => toMap(item.location.coords)}
+                    onPress={() => toMap(item.location)}
                   >
                     <EvilIcons name="location" size={32} color="#BDBDBD" />
                     <Text style={styles.LocationName}>{item.locationName}</Text>

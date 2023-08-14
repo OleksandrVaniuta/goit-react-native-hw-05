@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import bgImg from '../images/BG_img.jpg';
 import { AntDesign } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux';
+import { authSignUpUser } from '../Redux/Auth/AuthOperations';
 
 export default function Registration() {
   const navigation = useNavigation();
@@ -27,6 +29,7 @@ export default function Registration() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isValid, setIsValid] = useState(true);
+  const dispath = useDispatch();
 
   const handleFocus = (inputName) => {
     setIsFocused((prev) => ({ ...prev, [inputName]: true }));
@@ -41,9 +44,11 @@ export default function Registration() {
       Keyboard.dismiss();
       return;
     }
+    const regData = { login: login, email: email, password: password };
+    dispath(authSignUpUser(regData));
     console.log(`login: ${login}, Email: ${email}, Password: ${password}`);
     Keyboard.dismiss();
-    navigation.navigate('Home');
+    // navigation.navigate('Home');
   };
 
   const togglePasswordVisibility = () => {

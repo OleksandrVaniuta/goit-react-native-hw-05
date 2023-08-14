@@ -18,10 +18,18 @@ import Maps from './NestedScreens/MapScreen';
 import Comments from './NestedScreens/CommentsScreen';
 import { AntDesign } from '@expo/vector-icons';
 import LogOut from './SvgComponents/SvgComponentLogOut';
+import { useDispatch } from 'react-redux';
+import { authSingOutUser } from '../Redux/Auth/AuthOperations';
 
 const NestedScreen = createStackNavigator();
 
 export default Posts = () => {
+  const dispath = useDispatch();
+
+  const SignOut = () => {
+    dispath(authSingOutUser());
+  };
+
   return (
     <NestedScreen.Navigator>
       <NestedScreen.Screen
@@ -45,7 +53,7 @@ export default Posts = () => {
           },
 
           headerRight: () => (
-            <TouchableOpacity>
+            <TouchableOpacity onPress={SignOut}>
               <LogOut />
             </TouchableOpacity>
           ),
@@ -71,7 +79,7 @@ export default Posts = () => {
             marginLeft: 30,
           },
           headerRight: () => (
-            <TouchableOpacity>
+            <TouchableOpacity onPress={SignOut}>
               <LogOut />
             </TouchableOpacity>
           ),
@@ -97,7 +105,7 @@ export default Posts = () => {
             marginLeft: 30,
           },
           headerRight: () => (
-            <TouchableOpacity>
+            <TouchableOpacity onPress={SignOut}>
               <LogOut />
             </TouchableOpacity>
           ),
