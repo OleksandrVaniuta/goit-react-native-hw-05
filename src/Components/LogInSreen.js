@@ -45,7 +45,6 @@ export default function Registration() {
     dispath(authSingInUser(loginData));
     console.log(`Email: ${email}, Password: ${password}`);
     Keyboard.dismiss();
-    // navigation.navigate('Home');
   };
 
   const togglePasswordVisibility = () => {

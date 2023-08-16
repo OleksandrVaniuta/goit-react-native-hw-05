@@ -12,7 +12,7 @@ import { authSlice } from '../Auth/AuthReducer';
 const auth = getAuth(db);
 
 export const authSignUpUser =
-  ({ login, email, password }) =>
+  ({ login, email, password, photo }) =>
   async (dispath, getState) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
@@ -21,12 +21,15 @@ export const authSignUpUser =
 
       await updateProfile(user, {
         displayName: login,
+        photoURL: photo,
       });
-      const { displayName, uid } = await auth.currentUser;
+      const { displayName, uid, photoURL } = await auth.currentUser;
 
       const userUpdateProfile = {
         userName: displayName,
         userId: uid,
+        photo: photoURL,
+        userEmail: email,
       };
       dispath(authSlice.actions.updateUserProfile(userUpdateProfile));
     } catch (error) {
@@ -56,12 +59,13 @@ export const authStateChangeUser = () => async (dispath, getState) => {
       const userUpdateProfile = {
         userName: user.displayName,
         userId: user.uid,
+        photo: user.photoURL,
+        userEmail: user.email,
       };
       dispath(authSlice.actions.authStateChange({ stateChange: true }));
       dispath(authSlice.actions.updateUserProfile(userUpdateProfile));
     } else {
-      // User is signed out
-      // ...
+
     }
   });
 };

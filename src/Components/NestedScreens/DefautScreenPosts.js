@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { collection, getFirestore, onSnapshot } from 'firebase/firestore';
+import app from '../../Firebase/config';
 import {
   StyleSheet,
   Text,
@@ -13,33 +15,37 @@ import {
   Platform,
 } from 'react-native';
 import { EvilIcons } from '@expo/vector-icons';
-import { collection, getDocs, getFirestore } from 'firebase/firestore';
-import app from '../../Firebase/config';
-// import db from '../Firebase/config';
+
 
 const cloudDb = getFirestore(app);
 
-export default function DefaultScrenPosts({ navigation }) {
+export default function DefaultScrenPosts({ navigation, route }) {
   const [posts, setPosts] = useState([]);
+  const [commentsCount, setCommentsCount] = useState({});
 
   const getAllPosts = async () => {
     try {
-      const snapshot = await getDocs(collection(cloudDb, 'posts'));
-      // const data = setPosts(
-      //   snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }))
-      // );
-      return setPosts(
-        snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }))
-      );
+      await onSnapshot(collection(cloudDb, 'posts'), (data) => {
+        const posts = data.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        setPosts(posts);
+      });
     } catch (error) {
-      console.log(error);
-      throw error;
+      console.log(error.message);
     }
   };
 
   useEffect(() => {
     getAllPosts();
-    // console.log(posts);
+    if (route.params?.commentsCount) {
+      console.log(route.params);
+      setCommentsCount((prev) => ({
+        ...prev,
+        [route.params.postId]: route.params.commentsCount,
+      }));
+    }
   }, []);
 
   const toMap = (location) => {
@@ -67,10 +73,18 @@ export default function DefaultScrenPosts({ navigation }) {
               <View style={styles.postInfo}>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={() => toComments(item.photo)}
+                  onPress={() => {
+                    navigation.navigate('CommentsScreen', {
+                      prevScreen: 'DefaultScrenPosts',
+                      postId: item.id,
+                      photo: item.photo,
+                    });
+                  }}
                 >
                   <EvilIcons name="comment" size={32} color="#BDBDBD" />
-                  <Text style={styles.CommentCount}>0</Text>
+                  <Text style={styles.CommentCount}>
+                    {commentsCount[item.id] || 0}
+                  </Text>
                 </TouchableOpacity>
                 {item.locationName && (
                   <TouchableOpacity

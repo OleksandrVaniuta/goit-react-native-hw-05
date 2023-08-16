@@ -1,22 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
-  StyleSheet,
-  Text,
-  TextInput,
-  SafeAreaView,
   TouchableOpacity,
-  View,
-  Image,
-  KeyboardAvoidingView,
-  StatusBar,
-  FlatList,
-  Platform,
 } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import DefaultScrenPosts from './NestedScreens/DefautScreenPosts';
 import Maps from './NestedScreens/MapScreen';
 import Comments from './NestedScreens/CommentsScreen';
-import { AntDesign } from '@expo/vector-icons';
 import LogOut from './SvgComponents/SvgComponentLogOut';
 import { useDispatch } from 'react-redux';
 import { authSingOutUser } from '../Redux/Auth/AuthOperations';

@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+
+import { Camera } from 'expo-camera';
+import * as Location from 'expo-location';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc, getFirestore } from 'firebase/firestore';
+import app from '../Firebase/config';
+import db from '../Firebase/config';
 import {
   StyleSheet,
   Text,
@@ -15,15 +22,10 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { Camera } from 'expo-camera';
-import * as Location from 'expo-location';
+
 import { MaterialIcons } from '@expo/vector-icons';
 import { EvilIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, getFirestore } from 'firebase/firestore';
-import app from '../Firebase/config';
-import db from '../Firebase/config';
 
 const storage = getStorage(db);
 const cloudDb = getFirestore(app);
@@ -35,7 +37,6 @@ export default function CreatePosts({ navigation }) {
   const [photo, setPhoto] = useState(null);
   const [location, setLocation] = useState(null);
   const [hasPermission, setHasPermission] = useState(null);
-
   const { userId, userName } = useSelector((state) => state.auth);
 
   const takePhoto = async () => {
@@ -49,10 +50,11 @@ export default function CreatePosts({ navigation }) {
 
   const sendPhoto = async () => {
     uploadPostToServer();
-    navigation.navigate('Posts');
+
     setPhoto(null);
     setPhotoName('');
     setLocationName('');
+    navigation.navigate('DefaultScrenPosts');
   };
 
   useEffect(() => {

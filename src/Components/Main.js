@@ -7,21 +7,15 @@ import Registarion from './RegistrationScreen';
 import LoginSreen from './LogInSreen';
 import { useSelector, useDispatch } from 'react-redux';
 import { authStateChangeUser } from '../Redux/Auth/AuthOperations';
-import { collection, addDoc, getFirestore } from 'firebase/firestore';
-import app from '../Firebase/config';
-// import db from '../Firebase/config';
 
 const MainStack = createStackNavigator();
 
 export default function Main() {
-  //   const [isAuth, setIsAuth] = useState(null);
   const dispath = useDispatch();
   const { stateChange } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispath(authStateChangeUser());
-    // const { stateChange } = useSelector((state) => state.auth);
-    // setIsAuth(stateChange);
   }, []);
 
   return (
