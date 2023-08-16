@@ -11,9 +11,17 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ImageBackground,
+  Image,
 } from 'react-native';
 import bgImg from '../images/BG_img.jpg';
 import { AntDesign } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { useDispatch } from 'react-redux';
+import { authSignUpUser } from '../Redux/Auth/AuthOperations';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+import db from '../Firebase/config';
+const storage = getStorage(db);
 
 export default function Registration() {
   const navigation = useNavigation();
@@ -27,6 +35,8 @@ export default function Registration() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isValid, setIsValid] = useState(true);
+  const dispath = useDispatch();
+  const [photo, setPhoto] = useState(null);
 
   const handleFocus = (inputName) => {
     setIsFocused((prev) => ({ ...prev, [inputName]: true }));
@@ -36,14 +46,29 @@ export default function Registration() {
     setIsFocused((prev) => ({ ...prev, [inputName]: false }));
   };
 
-  const onRegister = () => {
+  const onRegister = async () => {
     if (!isValid || login === '' || email === '' || password === '') {
       Keyboard.dismiss();
       return;
     }
-    console.log(`login: ${login}, Email: ${email}, Password: ${password}`);
+    try {
+      const avatar = photo ? await uploadPhotoToServer() : null;
+
+      const regData = {
+        login: login,
+        email: email,
+        password: password,
+        photo: avatar,
+      };
+
+      dispath(authSignUpUser(regData));
+
+      setPhoto(null);
+    } catch (error) {
+      console.log(error.message);
+    }
+
     Keyboard.dismiss();
-    navigation.navigate('Home');
   };
 
   const togglePasswordVisibility = () => {
@@ -54,6 +79,44 @@ export default function Registration() {
     setEmail(text);
     const emailPattern = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
     setIsValid(emailPattern.test(text));
+  };
+
+  const handleAddAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permission');
+      return;
+    }
+
+    const image = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (image.assets.length > 0) {
+      setPhoto(image.assets[0]);
+    }
+  };
+
+  const uploadPhotoToServer = async () => {
+    const uniquePostId = Date.now().toString();
+    try {
+      const response = await fetch(photo.uri);
+      const file = await response.blob();
+
+      const storageRef = ref(
+        storage,
+        `profileAvatar/${uniquePostId}/${file.data.name}`
+      );
+      await uploadBytes(storageRef, file);
+
+      const getAvatarRef = await getDownloadURL(storageRef);
+      return getAvatarRef;
+    } catch (error) {
+      console.log(error.message);
+    }
   };
 
   return (
@@ -67,14 +130,20 @@ export default function Registration() {
           >
             <View style={styles.form}>
               <View style={styles.photoBox}>
-                <View style={styles.photoContainer}>
+                <TouchableOpacity
+                  style={styles.photoContainer}
+                  onPress={handleAddAvatar}
+                >
+                  {photo && (
+                    <Image style={styles.avatar} source={{ uri: photo.uri }} />
+                  )}
                   <AntDesign
                     style={styles.iconAdd}
                     name="pluscircleo"
                     size={24}
                     color="#FF6C00"
                   />
-                </View>
+                </TouchableOpacity>
               </View>
               <Text style={styles.RegTitle}>Реєстрація</Text>
               <TextInput
@@ -170,6 +239,12 @@ const styles = StyleSheet.create({
   photoBox: {
     height: 60,
     marginBottom: 32,
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 16,
+    position: 'absolute',
   },
   photoContainer: {
     width: 120,

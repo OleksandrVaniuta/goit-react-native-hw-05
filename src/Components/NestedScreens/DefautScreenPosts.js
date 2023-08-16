@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { collection, getFirestore, onSnapshot } from 'firebase/firestore';
+import app from '../../Firebase/config';
 import {
   StyleSheet,
   Text,
@@ -14,14 +16,37 @@ import {
 } from 'react-native';
 import { EvilIcons } from '@expo/vector-icons';
 
-export default function DefaultScrenPosts({ route, navigation }) {
+
+const cloudDb = getFirestore(app);
+
+export default function DefaultScrenPosts({ navigation, route }) {
   const [posts, setPosts] = useState([]);
+  const [commentsCount, setCommentsCount] = useState({});
+
+  const getAllPosts = async () => {
+    try {
+      await onSnapshot(collection(cloudDb, 'posts'), (data) => {
+        const posts = data.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        setPosts(posts);
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
   useEffect(() => {
-    if (route.params) {
-      setPosts((prevState) => [...prevState, route.params]);
+    getAllPosts();
+    if (route.params?.commentsCount) {
+      console.log(route.params);
+      setCommentsCount((prev) => ({
+        ...prev,
+        [route.params.postId]: route.params.commentsCount,
+      }));
     }
-  }, [route.params]);
+  }, []);
 
   const toMap = (location) => {
     navigation.navigate('MapScreen', { location });
@@ -48,15 +73,23 @@ export default function DefaultScrenPosts({ route, navigation }) {
               <View style={styles.postInfo}>
                 <TouchableOpacity
                   style={styles.iconContainer}
-                  onPress={() => toComments(item.photo)}
+                  onPress={() => {
+                    navigation.navigate('CommentsScreen', {
+                      prevScreen: 'DefaultScrenPosts',
+                      postId: item.id,
+                      photo: item.photo,
+                    });
+                  }}
                 >
                   <EvilIcons name="comment" size={32} color="#BDBDBD" />
-                  <Text style={styles.CommentCount}>0</Text>
+                  <Text style={styles.CommentCount}>
+                    {commentsCount[item.id] || 0}
+                  </Text>
                 </TouchableOpacity>
                 {item.locationName && (
                   <TouchableOpacity
                     style={[styles.iconContainer, { marginLeft: 'auto' }]}
-                    onPress={() => toMap(item.location.coords)}
+                    onPress={() => toMap(item.location)}
                   >
                     <EvilIcons name="location" size={32} color="#BDBDBD" />
                     <Text style={styles.LocationName}>{item.locationName}</Text>

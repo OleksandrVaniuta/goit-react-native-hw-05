@@ -1,4 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+
+import { Camera } from 'expo-camera';
+import * as Location from 'expo-location';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc, getFirestore } from 'firebase/firestore';
+import app from '../Firebase/config';
+import db from '../Firebase/config';
 import {
   StyleSheet,
   Text,
@@ -14,11 +22,13 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { Camera } from 'expo-camera';
-import * as Location from 'expo-location';
+
 import { MaterialIcons } from '@expo/vector-icons';
 import { EvilIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
+
+const storage = getStorage(db);
+const cloudDb = getFirestore(app);
 
 export default function CreatePosts({ navigation }) {
   const [photoName, setPhotoName] = useState('');
@@ -27,6 +37,7 @@ export default function CreatePosts({ navigation }) {
   const [photo, setPhoto] = useState(null);
   const [location, setLocation] = useState(null);
   const [hasPermission, setHasPermission] = useState(null);
+  const { userId, userName } = useSelector((state) => state.auth);
 
   const takePhoto = async () => {
     if (cameraRef) {
@@ -38,17 +49,12 @@ export default function CreatePosts({ navigation }) {
   };
 
   const sendPhoto = async () => {
-    navigation.navigate('DefaultScrenPosts', {
-      photo,
-      location,
-      photoName,
-      locationName,
-    });
+    uploadPostToServer();
+
     setPhoto(null);
     setPhotoName('');
     setLocationName('');
-    console.log(location);
-    console.log(photoName);
+    navigation.navigate('DefaultScrenPosts');
   };
 
   useEffect(() => {
@@ -79,6 +85,40 @@ export default function CreatePosts({ navigation }) {
     setPhotoName('');
     setLocationName('');
     setLocation(null);
+  };
+
+  const uploadPostToServer = async () => {
+    try {
+      const photo = await uploadPhotoToServer();
+      const docRef = await addDoc(collection(cloudDb, 'posts'), {
+        photo: photo,
+        location: location.coords,
+        photoName: photoName,
+        locationName: locationName,
+        userId: userId,
+        userName: userName,
+      });
+      console.log('Document written with ID: ', docRef.id);
+    } catch (e) {
+      console.error('Error adding document: ', e);
+      throw e;
+    }
+  };
+
+  const uploadPhotoToServer = async () => {
+    const postId = Date.now().toString();
+
+    try {
+      const response = await fetch(photo);
+      const file = await response.blob();
+      const storageRef = await ref(storage, `images/${postId}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const processedPhoto = await getDownloadURL(storageRef);
+      return processedPhoto;
+      // console.log(processedPhoto);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
   };
 
   const cameraIconClr = photo ? '#fff' : '#BDBDBD';
